@@ -4,7 +4,7 @@ jenkins:
   numExecutors: 1
   mode: NORMAL
   scmCheckoutRetryCount: 3
-  labelString: "master-label"  
+  labelString: "master"  
 
   securityRealm:
     local:
@@ -15,7 +15,7 @@ jenkins:
 
   authorizationStrategy:
     globalMatrix:
-      grantedPermissions:
+      permissions:
         - "Overall/Read:anonymous"
         - "Job/Read:anonymous"
         - "View/Read:anonymous"
@@ -33,7 +33,7 @@ credentials:
         - usernamePassword:
             scope:    GLOBAL
             id:       github-user
-            username: ewelina
+            username: shahshadab1680
             password: ${github:-githubPassw0rd}
             description: github username/password  
 
@@ -42,5 +42,22 @@ tool:
     installations:
       - name: Default
         home: "git"
+
+credentials:
+ system:
+   domainCredentials:
+     - credentials:
+         - string:
+             scope: GLOBAL
+             id: slack-token
+             description: "Slack access token"
+             secret: xoxb-497707237954-3873865554562-uv1Snl4AgI2n2Ldoj48gSikN
+
+unclassified:
+ slackNotifier:
+   teamDomain: eurustechnologies.slack.com
+   tokenCredentialId: "slack-token"
+   botUser: true
+   
 
 

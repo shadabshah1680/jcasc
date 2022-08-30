@@ -1,16 +1,16 @@
 unclassified:
   location:
     url: http://localhost
-    adminAddress: support@praqma.net
+    adminAddress: syed.shadab@eurustechnologies.com
   
   globalLibraries:
     libraries:
-      - name: "praqma-shared@master"
+      - name: "slack_alert_library@main"
         implicit: true
-        defaultVersion: "master"
+        defaultVersion: "main"
         retriever:
           modernSCM:
             scm:
               git:
-                remote: "https://github.com/Praqma/shared-pipeline.git"
+                remote: "https://github.com/shadabshah1680/groovy_libraries.git"
                 
