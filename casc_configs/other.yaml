@@ -5,7 +5,7 @@ unclassified:
   
   globalLibraries:
     libraries:
-      - name: "slack_alert_library@main"
+      - name: "slack_alert_library"
         implicit: true
         defaultVersion: "main"
         retriever:

@@ -2,19 +2,17 @@ pipelineJob('slack_shared_library_configuration_with_jcasc') {
     definition {
         cps {
             script('''
+
 node {
 
     stage("STARTED") {
     
 					try{
-					        slackNotifier()
+					        slackNotifier('STARTED')
                   echo "STARTED"
          }
-					catch(e) {
+					catch(a) {
 					        currentBuild.result = 'FAILURE'	
-         }
-					finally {
-                   slackNotifier(currentBuild.result)
          }
     
     } 
@@ -22,31 +20,26 @@ node {
     stage("SUCCESS") {
 
 					try{
-					        slackNotifier()
+					        slackNotifier('SUCCESS')
                   echo "SUCCESS"
          }
-					catch(e) {
+					catch(b) {
 					        currentBuild.result = 'FAILURE'	
          }
-					finally {
-                   slackNotifier(currentBuild.result)
-         }    
+			    
    }
 
     stage("ERROR") {
         	
 					try{
-					        slackNotifier()
-                  echo $error
+					        slackNotifier('UNSTABLE')
+                  echo 'ERROR'
          }
-					catch(e) {
+					catch(c) {
 					        currentBuild.result = 'FAILURE'	
          }
-					finally {
-                   slackNotifier(currentBuild.result)
-         }
     }
-}            
+}
             ''')
             sandbox()
         }
