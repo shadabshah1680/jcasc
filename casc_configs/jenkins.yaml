@@ -1,5 +1,5 @@
 jenkins:
-  systemMessage: "\n\nDemo setup for Jenkins Configuration as Code plugin......\n\n"
+  systemMessage: "\nDemo setup for Jenkins Slack......\n\n"
 
   numExecutors: 1
   mode: NORMAL
@@ -11,20 +11,21 @@ jenkins:
       allowsSignup: false
       users:
        - id: admin
-         password: ${adminpw:-passw0rd}
+        #  password: ${adminpw:-passw0rd}
+         password: shadab@123
 
   authorizationStrategy:
     globalMatrix:
       permissions:
-        - "Overall/Read:anonymous"
-        - "Job/Read:anonymous"
-        - "View/Read:anonymous"
-        - "Overall/Administer:anonymous"
+        - "Overall/Read:admin"
+        - "Job/Read:admin"
+        - "View/Read:admin"
+        - "Overall/Administer:admin"
 
   crumbIssuer: "standard"
 
   remotingSecurity:
-    enabled: true    
+    enabled: true   
 
 credentials:
   system:

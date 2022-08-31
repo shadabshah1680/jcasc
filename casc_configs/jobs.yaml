@@ -1,5 +1,5 @@
 jobs:
   - url: http://44.209.165.175/pipeline.dsl
   - file: /var/jenkins_conf/jobs.groovy
-  - script: >
-      job('jcasc_slack_configuration')
+
+    

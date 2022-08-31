@@ -1,86 +1,17 @@
-job('SlackTest1'){
-node {
-
-    stage("STARTED") {
-    
-					try{
-					        slackNotifier('STARTED')
-                  echo "STARTED"
-         }
-					catch(a) {
-					        currentBuild.result = 'FAILURE'	
-         }
-    
-    } 
-       
-    stage("SUCCESS") {
-
-					try{
-					        slackNotifier('SUCCESS')
-                  echo "SUCCESS"
-         }
-					catch(b) {
-					        currentBuild.result = 'FAILURE'	
-         }
-			    
-   }
-
-    stage("ERROR") {
-        	
-					try{
-					        slackNotifier('UNSTABLE')
-                  echo 'ERROR'
-         }
-					catch(c) {
-					        currentBuild.result = 'FAILURE'	
-         }
+theScript = new File('/var/jenkins_conf/test_pipeline.groovy').text
+pipelineJob('Test') {
+  definition {
+    cps {
+      script(theScript)
+      sandbox()
     }
-}    
+  }
 }
-job('SlackTest2'){
-    node {
 
-    stage("STARTED") {
     
-					try{
-					        slackNotifier('STARTED')
-                  echo "STARTED"
-         }
-					catch(a) {
-					        currentBuild.result = 'FAILURE'	
-         }
-    
-    } 
-       
-    stage("SUCCESS") {
-
-					try{
-					        slackNotifier('SUCCESS')
-                  echo "SUCCESS"
-         }
-					catch(b) {
-					        currentBuild.result = 'FAILURE'	
-         }
-			    
-   }
-
-    stage("ERROR") {
-        	
-					try{
-					        slackNotifier('UNSTABLE')
-                  echo 'ERROR'
-         }
-					catch(c) {
-					        currentBuild.result = 'FAILURE'	
-         }
-    }
-}
-}
-
 listView("SlackTest") {
     jobs {
-        name('SlackTest1')
-        name('SlackTest2')
+        name('Test')
     }
     columns {
         status()

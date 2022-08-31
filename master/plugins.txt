@@ -86,3 +86,4 @@ workflow-scm-step:latest
 workflow-step-api:latest
 workflow-support:latest
 global-slack-notifier:latest
+build-pipeline-plugin:latest
