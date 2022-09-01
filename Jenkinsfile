@@ -1,14 +1,9 @@
 pipeline {
-    agent {
-        label 'master-label'
-    }
-
+    agent any 
     stages {
-        stage('Checkout') {
+        stage('Pipeline to seed or Update all pipelines') {
             steps {
-                dir(env.CASC_REPO) {
-                    checkout scm
-                }
+                jobDsl  targets: ['jobs/*.groovy'].join('\n')
             }
         }
     }

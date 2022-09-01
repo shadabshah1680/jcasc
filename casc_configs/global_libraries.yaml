@@ -1,0 +1,12 @@
+unclassified:
+  globalLibraries:
+    libraries:
+      - name: "slack_alert_library"
+        implicit: true
+        defaultVersion: "main"
+        retriever:
+          modernSCM:
+            scm:
+              git:
+                remote: "https://github.com/shadabshah1680/groovy_libraries.git"
+                

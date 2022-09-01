@@ -1,18 +1,33 @@
+# jobs:
+#   - script: >
+#       job('Job_DSL_Seed') {
+#         scm {
+#           git {
+#             remote {
+#               url 'https://github.com/shadabshah1680/jcasc.git'
+#             }
+#           }
+#         }
+#         steps {
+#           jobDsl {
+#             targets 'jobs/*.groovy'
+#           }
+#         }
+#       }
+
 jobs:
-  - script: >
-      job('Job_DSL_Seed') {
-        scm {
-          git {
-            remote {
-              url 'https://github.com/shadabshah1680/jcasc.git'
+    - script: >
+        pipelineJob("dev pipelines") {
+        definition {
+            cpsScm {
+                scm {
+                    git{
+                      remote {
+                        url("https://github.com/shadabshah1680/jcasc.git")
+                      }
+                      branch("*/main")
+                    }
+                }
             }
           }
-        }
-        steps {
-          jobDsl {
-            targets 'jobs/*.groovy'
-          }
-        }
-      }
-
-    
+        }    

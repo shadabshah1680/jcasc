@@ -55,6 +55,9 @@ credentials:
              secret: "xoxp-497707237954-3759335014758-3870914046805-6fdc6e6e85b597142a925fff13ab86a4"
 
 unclassified:
+ location:
+    url: http://localhost
+    adminAddress: syed.shadab@eurustechnologies.com
  slackNotifier:
    tokenCredentialId: "slack-token"
    teamDomain: "eurustechnologies"
