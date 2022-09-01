@@ -1,5 +1,18 @@
 jobs:
-  - url: http://44.209.165.175/pipeline.dsl
-  - file: /var/jenkins_conf/jobs.groovy
+  - script: >
+      job('Job_DSL_Seed') {
+        scm {
+          git {
+            remote {
+              url 'https://github.com/shadabshah1680/jcasc.git'
+            }
+          }
+        }
+        steps {
+          jobDsl {
+            targets 'jobs/*.groovy'
+          }
+        }
+      }
 
     
