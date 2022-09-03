@@ -30,7 +30,7 @@ jenkins:
   crumbIssuer: "standard"
 
   remotingSecurity:
-    enabled: true   
+    enabled: false   
 
 credentials:
   system:
