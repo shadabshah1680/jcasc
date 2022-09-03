@@ -1,10 +1,11 @@
+def signature = 'new groovy.json.JsonSlurperClassic'
+org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval.get().approveSignature(signature)
 pipeline {
     agent any 
     stages {
         stage('Pipeline to seed or Update all pipelines') {
             steps {
                 jobDsl  targets: ['jobs/*.groovy'].join('\n')
-                scriptApproval.save()
             }
         }
 
