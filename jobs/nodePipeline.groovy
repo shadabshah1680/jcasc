@@ -9,17 +9,6 @@ def desired_capacity = "1"
 def max_size = "5"
 def group_name = "jnlp-lc-4"
 
-
-
-    stages {
-        stage('List production S3 buckets') {
-            steps {
-                withAWS(roleAccount:'<your-production-account-id>', role:'cross-account-role') {
-                    sh 'aws s3 ls'
-                }
-            }
-        }
-
 pipeline {
     agent {
 		label 'master'
@@ -44,7 +33,7 @@ pipeline {
 					finally {
                             slackNotifier(currentBuild.result)
                            }
-				 }
+				    }
 				    
 				}
             }
