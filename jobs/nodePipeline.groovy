@@ -10,6 +10,16 @@ def max_size = "5"
 def group_name = "jnlp-lc-4"
 
 
+
+    stages {
+        stage('List production S3 buckets') {
+            steps {
+                withAWS(roleAccount:'<your-production-account-id>', role:'cross-account-role') {
+                    sh 'aws s3 ls'
+                }
+            }
+        }
+
 pipeline {
     agent {
 		label 'master'
@@ -20,9 +30,11 @@ pipeline {
 				script{
 	
 					try{
-					        slackNotifier()
-					        sh 'aws autoscaling update-auto-scaling-group --auto-scaling-group-name  ${group_name}  --region us-east-1 --max-size ${max_size}'
+                        withAWS(roleAccount:'155965589397', role:'arn:aws:iam::155965589397:role/Ec2-role-for-autoscaling') {
+                            sh 'aws autoscaling update-auto-scaling-group --auto-scaling-group-name  ${group_name}  --region us-east-1 --max-size ${max_size}'
 							sh 'aws autoscaling update-auto-scaling-group --auto-scaling-group-name ${group_name} --desired-capacity ${desired_capacity} --region us-east-1'
+                            }
+					        slackNotifier()
 						}
 					catch(e) {
 					        currentBuild.result = 'FAILURE'
