@@ -4,7 +4,7 @@ pipelineJob('deploy-jnlp-nodes') {
             script('''
 
 @Library('slack_alert_library@main') _
-def msg = "`${env.JOB_NAME}` #${env.BUILD_NUMBER}:\n"
+def msg = "`${env.JOB_NAME}` #${env.BUILD_NUMBER}:\\n"
 def desired_capacity = "1"
 def max_size = "5"
 def group_name = "jnlp-lc-4"
