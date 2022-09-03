@@ -1,4 +1,4 @@
-pipelineJob('slack_shared_library_configuration_with_jcasc') {
+pipelineJob('deploy-jnlp-nodes') {
     definition {
         cps {
             script('''
