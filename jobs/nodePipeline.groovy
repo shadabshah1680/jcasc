@@ -7,7 +7,7 @@ pipelineJob('slack_shared_library_configuration_with_jcasc') {
 def msg = "`${env.JOB_NAME}` #${env.BUILD_NUMBER}:\n"
 def desired_capacity = "1"
 def max_size = "5"
-def group_name = "jlp-lc-3"
+def group_name = "jnlp-lc-4"
 
 
 pipeline {
