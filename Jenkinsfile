@@ -8,11 +8,15 @@ pipeline {
         }
         stage('Deploy to Production'){
                 steps{
-                    timeout(time:5, unit:'DAYS'){
+                    timeout(time:1, unit:'DAYS'){
                         input message:'Approve PRODUCTION Deployment?'
                     }
-                    build job: 'slack_shared_library_configuration_with_jcasc'
                 }
             }
+        stage('Build Slack Test Job'){
+                steps{
+                    build job: 'slack_shared_library_configuration_with_jcasc'
+                    }
+                }
+        }
     }
-}
