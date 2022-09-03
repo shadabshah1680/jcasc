@@ -19,9 +19,7 @@ jobs:
     - script: >
         pipelineJob("dev pipelines") {
         definition {
-          def signature = 'new groovy.json.JsonSlurperClassic'
-          org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval.get().approveSignature(signature)
-            cpsScm {
+             cpsScm {
                 scm {
                     git{
                       remote {
