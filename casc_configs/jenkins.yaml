@@ -15,12 +15,75 @@ jenkins:
          password: i9p0o8
 
   authorizationStrategy:
-    globalMatrix:
-      permissions:
-        - "Overall/Read:admin"
-        - "Job/Read:admin"
-        - "View/Read:admin"
-        - "Overall/Administer:admin"
+    roleBased:
+      roles:
+        global:
+          - name: "admin"
+            description: "Jenkins administrators with full permissions"
+            permissions:
+              - "Overall/Administer"
+            assignments:
+              - "admin"
+          - name: "manager"
+            description: "Jenkins managers with limited admin permissions"
+            permissions:
+              - "Overall/Manage"
+            assignments:
+              - "manager"
+          - name: "readonly-admin"
+            description: "Jenkins read-only administrators"
+            permissions:
+              - "Overall/SystemRead"
+              - "Job/Read"
+              - "Agent/Read"
+            assignments:
+              - "readonly"
+          - name: "readonly-user"
+            description: "Read-only users"
+            permissions:
+              - "Overall/Read"
+              - "Job/Read"
+              - "Agent/Build"
+            assignments:
+              - "authenticated"
+        items:
+          - name: "@OwnerNoSid"
+            description: "Primary Owners"
+            pattern: ".*"
+            permissions:
+              - "Job/Configure"
+              - "Job/Build"
+              - "Job/Delete"
+              - "Run/Delete"
+            assignments:
+              - "authenticated"
+          - name: "@CoOwnerNoSid"
+            description: "Secondary Owners"
+            pattern: ".*"
+            permissions:
+              - "Job/Configure"
+              - "Job/Build"
+            assignments:
+              - "authenticated"
+        agents:
+          - name: "@OwnerNoSid"
+            description: "Primary Owners"
+            pattern: ".*"
+            permissions:
+              - "Agent/Configure"
+              - "Agent/Build"
+              - "Agent/Delete"
+              - "Agent/Build"
+            assignments:
+              - "authenticated"
+          - name: "@CoOwnerNoSid"
+            description: "Secondary Owners"
+            pattern: ".*"
+            permissions:
+              - "Agent/Connect"
+              - "Agent/Build"
+            assignments:
+              - "authenticated"
 
   crumbIssuer: "standard"
 
@@ -63,6 +126,12 @@ unclassified:
    teamDomain: "eurustechnologies"
    room: "custom_pipelines_alerts"
    botUser: "true"
+ githubServers:
+   servers:
+   - displayName: ""
+     manageHooks: true
+     serverUrl: "https://api.github.com"
+     credentials: "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"
    
 
 
