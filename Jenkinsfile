@@ -1,5 +1,3 @@
-def signature = 'new groovy.json.JsonSlurperClassic'
-org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval.get().approveSignature(signature)
 pipeline {
     agent any 
     stages {
