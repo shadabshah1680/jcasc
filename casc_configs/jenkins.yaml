@@ -68,10 +68,7 @@ unclassified:
    teamDomain: "eurustechnologies"
    room: "custom_pipelines_alerts"
    botUser: "true"
- gitHubConfiguration:
-   apiRateLimitChecker: ThrottleForNormalize
- gitHubPluginConfig:
-   hookUrl:  http://52.201.211.141/github-webhook/
+
 
 
 

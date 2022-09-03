@@ -6,18 +6,11 @@ pipeline {
                 jobDsl  targets: ['jobs/*.groovy'].join('\n')
             }
         }
-        stage('Deploy to Production'){
-                steps{
-                    timeout(time:1, unit:'DAYS'){
-                        input message:'Approve PRODUCTION Deployment?'
-                    }
-                }
-            }
 
-        stage('Build Slack Test Job'){
-                steps{
-                    build job: 'slack_shared_library_configuration_with_jcasc'
-                    }
-                }
+        // stage('Build Slack Test Job'){
+        //         steps{
+        //             build job: 'slack_shared_library_configuration_with_jcasc'
+        //             }
+        //         }
         }
     }
