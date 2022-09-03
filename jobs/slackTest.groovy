@@ -2,12 +2,6 @@ pipelineJob('slack_shared_library_configuration_with_jcasc') {
     definition {
         cps {
             script('''
-import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval
-
-ScriptApproval scriptApproval = ScriptApproval.get()
-scriptApproval.pendingScripts.each {
-    scriptApproval.approveScript(it.hash)
-}
 
 node {
 
