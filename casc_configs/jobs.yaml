@@ -19,11 +19,11 @@ jobs:
     - script: >
         pipelineJob("dev pipelines") {
         definition {
-             cpsScm {
+            cpsScm {
                 scm {
                     git{
                       remote {
-                        url("https://github.com/shadabshah1680/jcasc_1.git")
+                        url("https://github.com/shadabshah1680/jcasc.git")
                       }
                       branch("*/main")
                     }

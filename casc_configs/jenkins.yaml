@@ -12,7 +12,7 @@ jenkins:
       users:
        - id: admin
         #  password: ${adminpw:-passw0rd}
-         password: i9p0o8
+         password: shadab@123
 
   authorizationStrategy:
     globalMatrix:
@@ -21,16 +21,11 @@ jenkins:
         - "Job/Read:admin"
         - "View/Read:admin"
         - "Overall/Administer:admin"
-        - "Overall/Administer:admin"
-        - "Job/Configure:admin"
-        - "Job/Build:admin"
-
-
 
   crumbIssuer: "standard"
 
   remotingSecurity:
-    enabled: false   
+    enabled: true   
 
 credentials:
   system:
@@ -68,7 +63,6 @@ unclassified:
    teamDomain: "eurustechnologies"
    room: "custom_pipelines_alerts"
    botUser: "true"
-
-
+   
 
 

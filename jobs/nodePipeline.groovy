@@ -1,13 +1,13 @@
-pipelineJob('deploy-jnlp-nodes') {
+pipelineJob('slack_shared_library_configuration_with_jcasc') {
     definition {
         cps {
             script('''
 
 @Library('slack_alert_library@main') _
-def msg = "`${env.JOB_NAME}` #${env.BUILD_NUMBER}:\\n"
+def msg = "`${env.JOB_NAME}` #${env.BUILD_NUMBER}:\n"
 def desired_capacity = "1"
 def max_size = "5"
-def group_name = "jnlp-lc-4"
+def group_name = "jlp-lc-3"
 
 
 pipeline {
@@ -43,3 +43,5 @@ pipeline {
         }
     }
 }
+
+
