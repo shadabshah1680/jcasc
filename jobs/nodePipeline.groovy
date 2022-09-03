@@ -19,7 +19,7 @@ pipeline {
 				script{
 	
 					try{
-                        withAWS(roleAccount:'155965589397', role:'arn:aws:iam::155965589397:role/Ec2-role-for-autoscaling') {
+                        withAWS(roleAccount:'155965589397', role:'Ec2-role-for-autoscaling') {
                             sh 'aws autoscaling update-auto-scaling-group --auto-scaling-group-name  ${group_name}  --region us-east-1 --max-size ${max_size}'
 							sh 'aws autoscaling update-auto-scaling-group --auto-scaling-group-name ${group_name} --desired-capacity ${desired_capacity} --region us-east-1'
                             }
