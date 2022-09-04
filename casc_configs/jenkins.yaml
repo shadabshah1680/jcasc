@@ -4,11 +4,7 @@ jenkins:
   numExecutors: 1
   mode: NORMAL
   scmCheckoutRetryCount: 3
-  labelString: "master"
-  primaryView:
-  all:
-    name: "all"  
-
+  labelString: "master"  
   securityRealm:
     local:
       allowsSignup: false
@@ -30,31 +26,6 @@ jenkins:
   remotingSecurity:
     enabled: true   
 
-  views:
-  - list:
-      columns:
-      - "status"
-      - "weather"
-      - "jobName"
-      - "lastSuccess"
-      - "lastFailure"
-      - "lastDuration"
-      - "buildButton"
-      includeRegex: "(prod.*)"
-      name: "Prod_Pipelines"
-
-  views:
-  - list:
-      columns:
-      - "status"
-      - "weather"
-      - "jobName"
-      - "lastSuccess"
-      - "lastFailure"
-      - "lastDuration"
-      - "buildButton"
-      includeRegex: "(dev.*)"
-      name: "dev_Pipelines"      
 
 credentials:
   system:
