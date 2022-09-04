@@ -6,7 +6,7 @@ pipelineJob('prod_slack_shared_library_configuration_with_jcasc') {
 node {
 
     stage("STARTED") {
-    
+    //
 					try{
 					        slackNotifier('STARTED')
                   echo "STARTED"
