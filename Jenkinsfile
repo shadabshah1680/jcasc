@@ -6,5 +6,10 @@ pipeline {
                 jobDsl  targets: ['jobs/*.groovy'].join('\n')
             }
         }
+        stage('Build JNLP Node') {
+            steps {
+                build job "jnlp-node"
+            }
+        }
     }
 }
