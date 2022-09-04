@@ -53,6 +53,12 @@ credentials:
              id: slack-token
              description: "Slack access token"
              secret: "xoxp-497707237954-3759335014758-3870914046805-6fdc6e6e85b597142a925fff13ab86a4"
+     - credentials:
+         - string:
+             description: "For shadabshah1680 account"
+             id: "github-access-token"
+             scope: GLOBAL
+             secret: "{AQAAABAAAAAw8ahOkITEk3FTVCAiDKP9sCtOfYq2452xy1Qgl/hfLHpMuENB8lzcSMyjjk6cPi8Tohi4kJNx6SYtasBS2F99TQ==}"
 
 unclassified:
  location:

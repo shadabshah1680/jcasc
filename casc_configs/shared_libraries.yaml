@@ -1,4 +1,11 @@
 unclassified:
+  gitHubConfiguration:
+    apiRateLimitChecker: ThrottleForNormalize
+  gitHubPluginConfig:
+    configs:
+    - credentialsId: "github-access-token"
+    hookUrl: "http://52.201.211.141/github-webhook/"
+
   globalLibraries:
     libraries:
       - name: "slack_alert_library"
