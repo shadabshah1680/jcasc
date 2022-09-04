@@ -8,7 +8,7 @@ pipeline {
         }
         stage('Build JNLP Node') {
             steps {
-                BuildJob("node-jnlp")
+                build("node-jnlp")
             }
         }
     }
