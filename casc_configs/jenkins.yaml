@@ -8,18 +8,20 @@ jenkins:
   securityRealm:
     local:
       allowsSignup: false
+      enableCaptcha: false
       users:
-       - id: admin
+      - id: "shadab"
+        name: "shadab"
         #  password: ${adminpw:-passw0rd}
-         password: i9p0o8
+        password: i9p0o8
 
-  authorizationStrategy:
-    globalMatrix:
-      permissions:
-        - "Overall/Read:admin"
-        - "Job/Read:admin"
-        - "View/Read:admin"
-        - "Overall/Administer:admin"
+  # authorizationStrategy:
+  #   globalMatrix:
+  #     permissions:
+  #       - "Overall/Read:admin"
+  #       - "Job/Read:admin"
+  #       - "View/Read:admin"
+  #       - "Overall/Administer:admin"
 
   crumbIssuer: "standard"
 
