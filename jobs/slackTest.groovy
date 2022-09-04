@@ -1,4 +1,4 @@
-pipelineJob('slack_shared_library_configuration_with_jcasc') {
+pipelineJob('prod_slack_shared_library_configuration_with_jcasc') {
     definition {
         cps {
             script('''

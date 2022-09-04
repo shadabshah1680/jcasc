@@ -4,7 +4,10 @@ jenkins:
   numExecutors: 1
   mode: NORMAL
   scmCheckoutRetryCount: 3
-  labelString: "master"  
+  labelString: "master"
+  primaryView:
+  all:
+    name: "all"  
 
   securityRealm:
     local:
@@ -26,6 +29,32 @@ jenkins:
 
   remotingSecurity:
     enabled: true   
+
+  views:
+  - list:
+      columns:
+      - "status"
+      - "weather"
+      - "jobName"
+      - "lastSuccess"
+      - "lastFailure"
+      - "lastDuration"
+      - "buildButton"
+      includeRegex: "(prod.*)"
+      name: "Prod_Pipelines"
+
+  views:
+  - list:
+      columns:
+      - "status"
+      - "weather"
+      - "jobName"
+      - "lastSuccess"
+      - "lastFailure"
+      - "lastDuration"
+      - "buildButton"
+      includeRegex: "(dev.*)"
+      name: "dev_Pipelines"      
 
 credentials:
   system:
@@ -56,7 +85,7 @@ credentials:
 
 unclassified:
  location:
-    url: http://localhost
+    url: http://52.201.211.141/
     adminAddress: syed.shadab@eurustechnologies.com
  slackNotifier:
    tokenCredentialId: "slack-token"
@@ -65,10 +94,11 @@ unclassified:
    botUser: "true"
    
 security:
-  apiToken:
-	 creationOfLegacyTokenEnabled: false
-	 tokenGenerationOnCreationEnabled: false
-	 usageStatisticsEnabled: true
-  globalJobDslSecurityConfiguration:
-	 useScriptSecurity: false
+ apiToken:
+  creationOfLegacyTokenEnabled: false
+  tokenGenerationOnCreationEnabled: false
+  usageStatisticsEnabled: true
+ globalJobDslSecurityConfiguration:
+  useScriptSecurity: false
+
 

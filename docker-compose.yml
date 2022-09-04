@@ -3,7 +3,7 @@ version: '3.3'
 services:
   jenkins: 
     build: 
-      context: ./master
+      context: ./config
     ports: 
       - 80:8080
       - 50000:50000

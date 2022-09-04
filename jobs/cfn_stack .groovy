@@ -1,4 +1,4 @@
-pipelineJob('node-jnlp') {
+pipelineJob('prod_cfn_stack') {
     definition {
         cps {
             script('''
