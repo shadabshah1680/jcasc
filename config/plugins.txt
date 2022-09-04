@@ -88,3 +88,4 @@ workflow-support:latest
 global-slack-notifier:latest
 build-pipeline-plugin:latest
 pipeline-aws:latest
+role-strategy:latest

@@ -15,14 +15,16 @@ jenkins:
         #  password: ${adminpw:-passw0rd}
         password: i9p0o8
 
-  # authorizationStrategy:
-  #   globalMatrix:
-  #     permissions:
-  #       - "Overall/Read:admin"
-  #       - "Job/Read:admin"
-  #       - "View/Read:admin"
-  #       - "Overall/Administer:admin"
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Read:shadab"
+        - "Job/Read:shadab"
+        - "View/Read:shadab"
+        - "Overall/Administer:shadab"
+        - "Job/Build:shadab"
 
+    
   crumbIssuer: "standard"
 
   remotingSecurity:
