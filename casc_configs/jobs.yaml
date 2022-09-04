@@ -1,16 +1,19 @@
 jobs:
     - script: >
-        pipelineJob("dev pipelines") {
+        pipelineJob("DSL-Seed-Pipeline") {
         definition {
             cpsScm {
                 scm {
-                    git{
-                      remote {
-                        url("https://github.com/shadabshah1680/jcasc.git")
-                      }
-                      branch("*/main")
+                      git{
+                        remote {
+                          url("https://github.com/shadabshah1680/jcasc.git")
+                                }
+                        branch("*/main")
+                        }
                     }
-                }
+                 triggers {
+                      githubPush()
+                  }
             }
           }
         }    
