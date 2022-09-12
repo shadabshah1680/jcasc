@@ -1,4 +1,4 @@
-pipelineJob('node-jnlp') {
+pipelineJob('prod-node-jnlp') {
     definition {
         cps {
             script('''
