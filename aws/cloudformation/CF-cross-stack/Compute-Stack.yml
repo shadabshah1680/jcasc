@@ -1,0 +1,277 @@
+######################################################
+# 
+#                   California
+#
+######################################################
+######################################################
+# 
+#                    Parameters
+#
+######################################################
+Parameters:
+    ExportNetworkStackName:
+      Description: The name of the stack that exports the values
+      Type: String
+      Default: Network-Stack-Dev
+    PMServerEnv:
+      Description: "Server Environment name."
+      ConstraintDescription: "Choose an Environment from the drop down"
+      Type: "String"    
+    OperatorEMail:
+        Description: Set email to Get Notifications
+        Type: String
+        Default: syed.shadab@eurustechnologies.com
+    InstanceTypeParameter: 
+        Description: Select instance type
+        Type: String
+        Default: t2.micro
+    KeyName:
+        Description: Existing EC2 KeyPair to enable SSH access to the instance
+        Type: AWS::EC2::KeyPair::KeyName
+        Default: rsa-pub
+    ImageAMI:
+        Description: Enter AMI ID
+        Type: String
+        Default: ami-0d9858aa3c6322f73
+    DBMaxSizeASG:
+      Description: "Enter the Max Size for the DBASG"
+      Type: String
+      Default: 3
+    DBMinSizeASG:
+      Description: "Enter the Min Size for the DBASG"
+      Type: String
+      Default: 1
+    DBDesiredCapacityASG:
+      Description: "Enter the desired capacity for the DBASG"
+      Type: String
+      Default: 1
+
+    WEBMaxSizeASG:
+      Description: "Enter the Max Size for the WEBASG"
+      Type: String
+      Default: 3
+    WEBMinSizeASG:
+      Description: "Enter the Min Size for the WEBASG"
+      Type: String
+      Default: 1
+    WEBDesiredCapacityASG:
+      Description: "Enter the desired capacity for the WEBASG"
+      Type: String
+      Default: 1
+
+Resources:
+
+######################################################
+# 
+#                 Launch Configuration
+#
+######################################################
+
+  DBConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      LaunchConfigurationName: !Sub '${PMServerEnv}-DBConfig'
+      IamInstanceProfile: Ec2-role-for-autoscaling
+      ImageId: !Ref "ImageAMI"
+      SecurityGroups: 
+        - Fn::ImportValue: !Sub '${ExportNetworkStackName}-${PMServerEnv}-MySqlDBstreamSG'        
+      InstanceType: !Ref "InstanceTypeParameter"
+      KeyName: !Ref "KeyName"
+      AssociatePublicIpAddress: "false"
+      UserData: 
+        Fn::Base64: |
+          #!/bin/bash
+          sudo yum update -y
+          sudo amazon-linux-extras install -y lamp-mariadb10.2-php7.2 
+          sudo yum install -y httpd
+          sudo systemctl enable httpd
+          sudo systemctl start httpd
+          sudo yum install mysql-server -y
+          sudo systemctl enable mariadb
+          sudo systemctl start mariadb
+          sudo yum install git -y 
+          git clone -b master  https://github.com/KhalidLam/PHP-Blog.git /tmp/shadab
+          mysql -h localhost -u root -e "create database blog"
+          cat /tmp/shadab/blog.sql | mysql -h localhost -u root blog
+          mysql -h localhost -u root -e "CREATE USER 'blog_user'@'%' IDENTIFIED BY 'i9p0o812'"
+          mysql -h localhost -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'blog_user'@'%' WITH GRANT OPTION"
+          echo "<html>Shadab Deployed </html>" > /var/www/html/index.php
+          echo "<html>Shadab Deployed </html>" > /var/www/html/index.html
+          sudo yum -y install expect
+          MYSQL_PASS=i9p0o8123
+          myPid=$!
+          echo "--> Wait 7s to boot up MySQL on pid ${myPid}"
+          sleep 7
+          echo "--> Set root password"
+          expect -f - <<-EOF
+            set timeout 10
+            spawn mysql_secure_installation
+            expect "Enter current password for root (enter for none):"
+            send -- "\r"
+            expect "Set root password?"
+            send -- "y\r"
+            expect "New password:"
+            send -- "${MYSQL_PASS}\r"
+            expect "Re-enter new password:"
+            send -- "${MYSQL_PASS}\r"
+            expect "Remove anonymous users?"
+            send -- "y\r"
+            expect "Disallow root login remotely?"
+            send -- "n\r"
+            expect "Remove test database and access to it?"
+            send -- "y\r"
+            expect "Reload privilege tables now?"
+            send -- "y\r"
+            expect eof
+          EOF
+          echo "--> Kill MySQL on pid ${myPid}"
+          kill -9 ${myPid}          
+
+  WEBConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      LaunchConfigurationName: !Sub '${PMServerEnv}-WEBConfig'
+      IamInstanceProfile: Ec2-role-for-autoscaling
+      ImageId: !Ref "ImageAMI"
+      SecurityGroups: 
+        - Fn::ImportValue: !Sub '${ExportNetworkStackName}-${PMServerEnv}-WebserverAppSG'       
+      InstanceType: !Ref "InstanceTypeParameter"
+      KeyName: !Ref "KeyName"
+      AssociatePublicIpAddress: "false"
+      UserData: !Base64 
+        'Fn::Sub': 
+          - |-    
+            #!/bin/bash 
+            sudo yum update -y
+            sudo amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2 -y
+            sudo yum install httpd -y 
+            sudo systemctl enable httpd
+            sudo systemctl start httpd php-fpm
+            sudo usermod -a -G apache ec2-user
+            sudo yum install git -y
+            rm -rf /var/www/html
+            git clone -b main https://github.com/shadabshah1680/blog.git /var/www/html
+            sudo chown -R ec2-user:apache /var/www
+            sudo chmod 2775 /var/www && find /var/www -type d -exec sudo chmod 2775 {} \;
+            find /var/www -type f -exec sudo chmod 0664 {} \;
+            sudo yum install jq -y
+            # aws configure set region us-east-2
+            # a=`aws elbv2 describe-load-balancers --query 'LoadBalancers[*].DNSName' | jq -r 'to_entries[ ] | .value' | grep DBelb`
+            sed -i "s|localhost|${elbdnsname}|g" /var/www/html/assest/db.php
+          - elbdnsname: !ImportValue 
+              'Fn::Sub': '${ExportNetworkStackName}${PMServerEnv}DBelb'   
+
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !Ref OperatorEMail
+          Protocol: email
+  
+
+######################################################
+# 
+#    DataBase   AutoScaling   Groups          
+#
+######################################################
+
+  DBAsg:          
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties: 
+      LaunchConfigurationName: !Sub '${PMServerEnv}-DBConfig'
+      AutoScalingGroupName: !Sub '${PMServerEnv}-DBAsg'
+      MinSize: !Ref DBMinSizeASG
+      MaxSize: !Ref DBMaxSizeASG
+      DesiredCapacity: !Ref DBDesiredCapacityASG
+      HealthCheckGracePeriod: 600
+      HealthCheckType: ELB
+      TargetGroupARNs:
+        - Fn::ImportValue: !Sub '${ExportNetworkStackName}-${PMServerEnv}-DBTargetGroup'
+      VPCZoneIdentifier:
+        - Fn::ImportValue: !Sub '${ExportNetworkStackName}-${PMServerEnv}-PrivateSubnet1'
+        - Fn::ImportValue: !Sub '${ExportNetworkStackName}-${PMServerEnv}-PrivateSubnet2'
+      NotificationConfiguration:
+        TopicARN: !Ref NotificationTopic
+        NotificationTypes:
+          - 'autoscaling:EC2_INSTANCE_LAUNCH'
+          - 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR'
+          - 'autoscaling:EC2_INSTANCE_TERMINATE'
+          - 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'        
+      Tags:
+        - Key: Name
+          PropagateAtLaunch: true
+          Value: !Sub "${PMServerEnv}-AutoScaledDB"
+     
+    DependsOn: DBConfig
+
+######################################################
+# 
+#    Web   AutoScaling   Group          
+#
+######################################################
+
+  WEBAsg:          
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties: 
+      LaunchConfigurationName: !Sub '${PMServerEnv}-WEBConfig'
+      AutoScalingGroupName: !Sub '${PMServerEnv}-WEBAsg'
+      MinSize: !Ref WEBMinSizeASG
+      MaxSize: !Ref WEBMaxSizeASG
+      DesiredCapacity: !Ref WEBDesiredCapacityASG
+      HealthCheckGracePeriod: 600
+      HealthCheckType: ELB
+      TargetGroupARNs: 
+        - Fn::ImportValue: !Sub '${ExportNetworkStackName}-${PMServerEnv}-WEBTargetGroup'
+      VPCZoneIdentifier:
+        - Fn::ImportValue: !Sub '${ExportNetworkStackName}-${PMServerEnv}-PrivateSubnet1'
+        - Fn::ImportValue: !Sub '${ExportNetworkStackName}-${PMServerEnv}-PrivateSubnet2'
+      NotificationConfiguration:
+        TopicARN: !Ref NotificationTopic
+        NotificationTypes:
+          - 'autoscaling:EC2_INSTANCE_LAUNCH'
+          - 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR'
+          - 'autoscaling:EC2_INSTANCE_TERMINATE'
+          - 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
+      Tags:
+        - Key: Name
+          PropagateAtLaunch: true
+          Value: !Sub "${PMServerEnv}-AutoScaledWEB"     
+    DependsOn: WEBConfig
+  
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref BastionHost    
+
+  BastionHost:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageAMI
+      InstanceType: t3a.nano
+      KeyName: !Ref KeyName
+      SubnetId: 
+          Fn::ImportValue: !Sub '${ExportNetworkStackName}-${PMServerEnv}-PublicSubnet1'
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub '${ExportNetworkStackName}-${PMServerEnv}-WebserverAppSG'
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 8
+      Tags:
+        - Key: Name
+          Value: !Sub '${PMServerEnv}-Bastion-Host'    
+      UserData:
+        Fn::Base64: !Sub |
+          echo "Shadab Deployed" > /home/$User/user.txt
+
+Outputs:
+
+  WEBAsg:
+    Description: "Ref PrivateSubnet2"
+    Value: !Ref WEBAsg
+    Export:
+      Name: !Sub "${AWS::StackName}-${PMServerEnv}-WEBAsg"
+
+
+

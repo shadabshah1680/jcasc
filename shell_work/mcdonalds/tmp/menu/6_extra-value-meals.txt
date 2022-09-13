@@ -1,0 +1,11 @@
+1	2 Pieces Crispy Chicken Meal
+2	9 Pieces Chicken McNuggets Meal
+3	6 Pieces Chicken McNuggets Meal
+4	Hot N&#8217; Crispy
+5	Big Mac
+6	McRoyale
+7	McChicken
+8	Double Cheese Burger
+9	Cheese Burger
+10	Spicy McCrispy
+11	Spicy Chicken Burger

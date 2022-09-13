@@ -1,0 +1,307 @@
+Parameters:
+
+    InstanceTypeParameter: 
+        Description: Select instance type
+        Type: String
+        Default: t2.micro
+    KeyName:
+        Description: Existing EC2 KeyPair to enable SSH access to the instance
+        Type: AWS::EC2::KeyPair::KeyName
+        Default: rsa-pub
+    ImageAMI:
+        Description: Enter AMI ID
+        Type: String
+        Default: ami-0d9858aa3c6322f73
+
+
+Resources:  
+  PubPrivateVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      Tags:
+      - Key: Name
+        Value: CF-eurus-VPC 
+
+  ## SUBNETS     
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      AvailabilityZone: us-west-1c
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value: Public-Subnet-1
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      AvailabilityZone: us-west-1b
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value: Public-Subnet-2
+ 
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      AvailabilityZone: us-west-1c
+      CidrBlock: 10.0.3.0/24
+      MapPublicIpOnLaunch: false
+      Tags:
+      - Key: Name
+        Value: Private-Subnet-1      
+ 
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      AvailabilityZone: us-west-1b
+      CidrBlock: 10.0.4.0/24
+      MapPublicIpOnLaunch: false
+      Tags:
+      - Key: Name
+        Value: Private-Subnet-1
+ 
+ ## INTERNET GATEWAY
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  
+  GatewayToInternet:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      InternetGatewayId: !Ref InternetGateway
+  
+  ## PUBLIC ROUTING
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+  
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayToInternet
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+ 
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+ 
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+ 
+  ## NAT GATEWAY
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    DependsOn: NatPublicIP
+    Properties: 
+      SubnetId: !Ref PublicSubnet1
+      AllocationId: !GetAtt NatPublicIP.AllocationId
+  ## ELASTIC IP
+  NatPublicIP:
+    Type: AWS::EC2::EIP
+    DependsOn: PubPrivateVPC
+    Properties:
+      Domain: vpc
+ 
+  ## PRIVATE ROUTING
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+  
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      NatGatewayId: !Ref NatGateway
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+ 
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+ 
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+      
+  MySqlDBstreamSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Inbound and outbound traffic for service
+      GroupName: 'MySqlDBstreamSG'
+      VpcId: !Ref PubPrivateVPC
+      Tags:
+        - Key: "Name"
+          Value: "MySqlDBstreamSG"
+      SecurityGroupEgress:
+      - IpProtocol: "-1"
+        FromPort: 0
+        ToPort: 0
+        CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 3306
+        ToPort: 3306
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+
+  WebserverAppSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Inbound and outbound traffic for service
+      GroupName: 'WebserverAppSG'
+      VpcId: !Ref PubPrivateVPC
+      Tags:
+        - Key: "Name"
+          Value: "WebserverAppSG"
+      SecurityGroupEgress:
+      - IpProtocol: "-1"
+        FromPort: 0
+        ToPort: 0
+        CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+
+  WEBelb:    
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: "WEBelb"
+      Scheme: "internet-facing"
+      Type: application
+      Subnets: 
+      - Ref: "PublicSubnet1"
+      - Ref: "PublicSubnet2"
+      SecurityGroups: 
+      - Ref: "WebserverAppSG"
+      IpAddressType: "ipv4"
+
+  HTTPListener:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      LoadBalancerArn: !Ref "WEBelb"
+      Port: 80
+      Protocol: "HTTP"
+      DefaultActions: 
+      - Type: forward
+        TargetGroupArn: !Ref "WEBTargetGroup"
+                
+  WEBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      Protocol: HTTP
+      TargetType: instance
+      VpcId: !Ref "PubPrivateVPC"  
+
+  DBelb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: "DBelb"
+      Scheme: "internal"    
+      Subnets: 
+        - Ref: "PrivateSubnet1"
+        - Ref: "PrivateSubnet2"
+      Type: network
+      IpAddressType: ipv4
+
+  TCPListener:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      LoadBalancerArn: !Ref "DBelb"
+      Port: 3306
+      Protocol: "TCP"
+      DefaultActions: 
+        - Type: forward
+          TargetGroupArn: !Ref "DBTargetGroup"
+                
+  DBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 3306
+      Protocol: TCP
+      TargetType: instance
+      VpcId: !Ref "PubPrivateVPC"
+
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref BastionHost
+
+  BastionHost:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageAMI
+      InstanceType: t3a.nano
+      KeyName: !Ref KeyName
+      SubnetId: !Ref PublicSubnet1
+      SecurityGroupIds:
+        - Ref: WebserverAppSG
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 8
+      Tags:
+        - Key: Name
+          Value: "Bastion-Host"    
+      UserData:
+        Fn::Base64: !Sub |
+          echo "Shadab Deployed" > /home/$User/user.txt
+
+Outputs:
+  DBTargetGroup:
+    Description: "Ref DBTargetGroup"
+    Value:
+      Ref: "DBTargetGroup"
+    Export:
+      Name: !Sub "${AWS::StackName}-DBTargetGroup"
+  WEBTargetGroup:
+    Description: "Ref WEBTargetGroup"
+    Value:
+      Ref: "WEBTargetGroup"
+    Export:
+      Name: !Sub "${AWS::StackName}-WEBTargetGroup"
+
+  DBelb:
+    Description: A reference to the Application Load Balancer
+    Value: !Ref DBelb
+
+  LoadBalancerUrl:
+    Description: The URL of the ALB
+    Value: !GetAtt DBelb.DNSName
+
+  TCPListener:
+    Description: A reference to a port 3306 listener
+    Value: !Ref TCPListener
+        
+
+

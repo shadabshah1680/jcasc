@@ -1,0 +1,65 @@
+jenkins:
+  systemMessage: "\nDemo setup for Jenkins Slack......\n\n"
+
+  numExecutors: 1
+  mode: NORMAL
+  scmCheckoutRetryCount: 3
+  labelString: "master"  
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+       - id: admin
+        #  password: ${adminpw:-passw0rd}
+         password: shadab@123
+
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Read:admin"
+        - "Job/Read:admin"
+        - "View/Read:admin"
+        - "Overall/Administer:admin"
+
+  crumbIssuer: "standard"
+
+  remotingSecurity:
+    enabled: true   
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+        - usernamePassword:
+            scope:    GLOBAL
+            id:       github-user
+            username: shahshadab1680
+            password: ${github:-githubPassw0rd}
+            description: github username/password  
+
+tool:
+  git:
+    installations:
+      - name: Default
+        home: "git"
+
+credentials:
+ system:
+   domainCredentials:
+     - credentials:
+         - string:
+             scope: GLOBAL
+             id: slack-token
+             description: "Slack access token"
+             secret: "xoxp-497707237954-3759335014758-3870914046805-6fdc6e6e85b597142a925fff13ab86a4"
+
+unclassified:
+ slackNotifier:
+   tokenCredentialId: "slack-token"
+   teamDomain: "eurustechnologies"
+   room: "custom_pipelines_alerts"
+   botUser: "true"
+   
+
+

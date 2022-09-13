@@ -1,0 +1,9 @@
+1	Orange Juice
+2	Coke
+3	Coke Zero
+4	Sprite
+5	Fanta
+6	Iced Americano
+7	Caramel Iced Latte
+8	Chocolate Frappé
+9	Chocolate Oreo Frappé

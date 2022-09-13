@@ -1,0 +1,78 @@
+properties([pipelineTriggers([githubPush()])])
+ 
+pipeline {
+    /* specify nodes for executing */
+    agent any
+ 
+    environment {
+    region = "us-east-1"
+    docker_repo_uri = "935648617855.dkr.ecr.us-east-1.amazonaws.com/sarmaaya-portal"
+    task_def_arn = "arn:aws:ecs:us-east-1:935648617855:task-definition/sarmaaya-portal-prod-taskdef"
+    task_def = "sarmaaya-portal-prod-taskdef"
+    cluster = "sarmaayapk-prod-FARGATE"
+    service = "sarmaaya-portal-prod"
+    exec_role_arn = "arn:aws:iam::935648617855:role/sarmaayapk-prod-execution-role"
+    git_access_token = credentials('git_access_token')
+    }
+
+    stages {
+        /* checkout repo */
+        stage('Checkout SCM') {
+            steps {
+                checkout([
+                 $class: 'GitSCM',
+                 branches: [[name: 'main']],
+                 userRemoteConfigs: [[
+                    url: 'git@github.com:sarmaayapk/sarmaaya-portal.git',
+                    credentialsId: 'sarmaaya-portal',
+                 ]]
+                ])
+            }
+        }
+        stage('Build') {
+            steps {
+                // Get SHA1 of current commit
+                script {
+                    commit_id = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                }
+                // Build the Docker image
+                sh """docker build -t ${docker_repo_uri}:${commit_id} \
+                --build-arg git_access_token=${git_access_token} \
+                --build-arg fb_url=https://sarmaaya.pk/login \
+                --build-arg git_branch=main \
+                --build-arg api_base_url=https://api.sarmaaya.pk/3.0 \
+                --build-arg api_psx_tv_url=https://api.sarmaaya.pk/Feed \
+                --build-arg api_mf_tv_url=https://api.sarmaaya.pk/mutualfundTrading \
+                --build-arg rds_db_host=sarmaaya-pk-prod.coopvotyuuil.us-east-1.rds.amazonaws.com \
+                --build-arg base_url=https://sarmaaya.pk \
+                ./docker/  --no-cache"""
+                // Get Docker login credentials for ECR
+                sh "aws ecr get-login --no-include-email --region ${region} | sh"
+                // Push Docker image
+                sh "docker push ${docker_repo_uri}:${commit_id}"
+                // Clean up
+                sh "docker rmi -f ${docker_repo_uri}:${commit_id}"
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                // Override image field in taskdef file
+                sh "sed -i 's|{{image}}|${docker_repo_uri}:${commit_id}|' ./docker/taskdef.json"
+                // Override family field in taskdef file
+                sh "sed -i 's|{{family}}|${task_def}|' ./docker/taskdef.json"
+                // Create a new task definition revision
+                sh "aws ecs register-task-definition --execution-role-arn ${exec_role_arn} --cli-input-json file://docker/taskdef.json --region ${region}"
+                // Update service on Fargate
+                sh "aws ecs update-service --cluster ${cluster} --service ${service} --task-definition ${task_def_arn} --region ${region}"
+            }
+        }
+    }
+ 
+    /* Cleanup workspace */
+    post {
+       always {
+           deleteDir()
+       }
+   }
+}

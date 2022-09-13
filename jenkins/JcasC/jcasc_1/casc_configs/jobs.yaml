@@ -1,0 +1,9 @@
+jobs:
+  - url: http://44.209.165.175/pipeline.dsl
+  - url: https://raw.githubusercontent.com/Praqma/job-dsl-collection/master/configuration-as-code-dsl/pipeline.dsl #casc
+ # - file: /var/jenkins_conf/jobs.groovy
+  - script: >
+      job('123456')
+  - file: /var/jenkins_conf/jobs.groovy
+  - script: >
+      job('jcasc_slack_configuration')

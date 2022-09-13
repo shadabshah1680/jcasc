@@ -1,0 +1,541 @@
+######################################################
+# 
+#                    Oregon
+#
+######################################################
+######################################################
+# 
+#                    Parameters
+#
+######################################################
+Parameters:
+    OperatorEMail:
+        Description: Set email to Get Notifications
+        Type: String
+        Default: syed.shadab@eurustechnologies.com
+    InstanceTypeParameter: 
+        Description: Select instance type
+        Type: String
+        Default: t2.micro
+    KeyName:
+        Description: Existing EC2 KeyPair to enable SSH access to the instance
+        Type: AWS::EC2::KeyPair::KeyName
+        Default: rsa-pub
+    ImageAMI:
+        Description: Enter AMI ID
+        Type: String
+        Default: ami-098e42ae54c764c35 
+    DBMaxSizeASG:
+      Description: "Enter the Max Size for the DBASG"
+      Type: String
+    DBMinSizeASG:
+      Description: "Enter the Min Size for the DBASG"
+      Type: String
+    DBDesiredCapacityASG:
+      Description: "Enter the desired capacity for the DBASG"
+      Type: String
+    WEBMaxSizeASG:
+      Description: "Enter the Max Size for the WEBASG"
+      Type: String
+    WEBMinSizeASG:
+      Description: "Enter the Min Size for the WEBASG"
+      Type: String
+    WEBDesiredCapacityASG:
+      Description: "Enter the desired capacity for the WEBASG"
+      Type: String
+
+Resources:
+  ## VPC
+  PubPrivateVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+  ## SUBNETS     
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      AvailabilityZone: us-west-2a
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value: Public-Subnet-1
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      AvailabilityZone: us-west-2b
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value: Public-Subnet-2
+ 
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      AvailabilityZone: us-west-2a
+      CidrBlock: 10.0.3.0/24
+      MapPublicIpOnLaunch: false
+      Tags:
+      - Key: Name
+        Value: Private-Subnet-1      
+ 
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      AvailabilityZone: us-west-2b
+      CidrBlock: 10.0.4.0/24
+      MapPublicIpOnLaunch: false
+      Tags:
+      - Key: Name
+        Value: Private-Subnet-1
+ 
+ ## INTERNET GATEWAY
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  
+  GatewayToInternet:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      InternetGatewayId: !Ref InternetGateway
+  
+  ## PUBLIC ROUTING
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+  
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayToInternet
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+ 
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+ 
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+ 
+  ## NAT GATEWAY
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    DependsOn: NatPublicIP
+    Properties: 
+      SubnetId: !Ref PublicSubnet1
+      AllocationId: !GetAtt NatPublicIP.AllocationId
+  ## ELASTIC IP
+  NatPublicIP:
+    Type: AWS::EC2::EIP
+    DependsOn: PubPrivateVPC
+    Properties:
+      Domain: vpc
+ 
+  ## PRIVATE ROUTING
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+  
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      NatGatewayId: !Ref NatGateway
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+ 
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+ 
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+######################################################
+# 
+#             Security Groups
+#
+######################################################
+
+  MySqlDBstreamSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Inbound and outbound traffic for service
+      GroupName: 'MySqlDBstreamSG'
+      VpcId: !Ref PubPrivateVPC
+      Tags:
+        - Key: "Name"
+          Value: "MySqlDBstreamSG"
+      SecurityGroupEgress:
+      - IpProtocol: "-1"
+        FromPort: 0
+        ToPort: 0
+        CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 3306
+        ToPort: 3306
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+
+  WebserverAppSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Inbound and outbound traffic for service
+      GroupName: 'WebserverAppSG'
+      VpcId: !Ref PubPrivateVPC
+      Tags:
+        - Key: "Name"
+          Value: "WebserverAppSG"
+      SecurityGroupEgress:
+      - IpProtocol: "-1"
+        FromPort: 0
+        ToPort: 0
+        CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+
+######################################################
+# 
+#                 Launch Configuration
+#
+######################################################
+
+  DBConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      IamInstanceProfile: Ec2-role-for-autoscaling
+      ImageId: !Ref "ImageAMI"
+      SecurityGroups: 
+        - Ref: "MySqlDBstreamSG"         
+      InstanceType: !Ref "InstanceTypeParameter"
+      KeyName: !Ref "KeyName"
+      AssociatePublicIpAddress: "false"
+      UserData: 
+        Fn::Base64: |
+          #!/bin/bash
+          sudo yum update -y
+          sudo amazon-linux-extras install -y lamp-mariadb10.2-php7.2 
+          sudo yum install -y httpd
+          sudo systemctl enable httpd
+          sudo systemctl start httpd
+          sudo yum install mysql-server -y
+          sudo systemctl enable mariadb
+          sudo systemctl start mariadb
+          sudo yum install git -y 
+          git clone -b master  https://github.com/KhalidLam/PHP-Blog.git /tmp/shadab
+          mysql -h localhost -u root -e "create database blog"
+          cat /tmp/shadab/blog.sql | mysql -h localhost -u root blog
+          mysql -h localhost -u root -e "CREATE USER 'blog_user'@'%' IDENTIFIED BY 'i9p0o812'"
+          mysql -h localhost -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'blog_user'@'%' WITH GRANT OPTION"
+          echo "<html>Shadab Deployed </html>" > /var/www/html/index.php
+          echo "<html>Shadab Deployed </html>" > /var/www/html/index.html
+          sudo yum -y install expect
+          MYSQL_PASS=i9p0o8123
+          myPid=$!
+          echo "--> Wait 7s to boot up MySQL on pid ${myPid}"
+          sleep 7
+          echo "--> Set root password"
+          expect -f - <<-EOF
+            set timeout 10
+            spawn mysql_secure_installation
+            expect "Enter current password for root (enter for none):"
+            send -- "\r"
+            expect "Set root password?"
+            send -- "y\r"
+            expect "New password:"
+            send -- "${MYSQL_PASS}\r"
+            expect "Re-enter new password:"
+            send -- "${MYSQL_PASS}\r"
+            expect "Remove anonymous users?"
+            send -- "y\r"
+            expect "Disallow root login remotely?"
+            send -- "n\r"
+            expect "Remove test database and access to it?"
+            send -- "y\r"
+            expect "Reload privilege tables now?"
+            send -- "y\r"
+            expect eof
+          EOF
+          echo "--> Kill MySQL on pid ${myPid}"
+          kill -9 ${myPid}          
+
+  WEBConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    DependsOn:  [DBelb,WebserverAppSG]       ### must specify dbelb
+    Properties:
+      IamInstanceProfile: Ec2-role-for-autoscaling
+      ImageId: !Ref "ImageAMI"
+      SecurityGroups: 
+        - Ref: "WebserverAppSG"         
+      InstanceType: !Ref "InstanceTypeParameter"
+      KeyName: !Ref "KeyName"
+      AssociatePublicIpAddress: "false"
+      UserData: !Base64 
+        'Fn::Sub': 
+          - |-    
+            #!/bin/bash 
+            sudo yum update -y
+            sudo amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2 -y
+            sudo yum install httpd -y 
+            sudo systemctl enable httpd
+            sudo systemctl start httpd php-fpm
+            sudo usermod -a -G apache ec2-user
+            sudo yum install git -y
+            rm -rf /var/www/html
+            git clone -b main https://github.com/shadabshah1680/blog.git /var/www/html
+            sudo chown -R ec2-user:apache /var/www
+            sudo chmod 2775 /var/www && find /var/www -type d -exec sudo chmod 2775 {} \;
+            find /var/www -type f -exec sudo chmod 0664 {} \;
+            sudo yum install jq -y
+            # aws configure set region us-east-2
+            # a=`aws elbv2 describe-load-balancers --query 'LoadBalancers[*].DNSName' | jq -r 'to_entries[ ] | .value' | grep DBelb`
+            sed -i "s|localhost|${elbdnsname}|g" /var/www/html/assest/db.php
+          - { elbdnsname: !GetAtt DBelb.DNSName }        
+######################################################
+# 
+#   Application  LoadBalancer and Target Group
+#
+######################################################
+
+  WEBelb:    
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: "WEBelb"
+      Scheme: "internet-facing"
+      Type: application
+      Subnets: 
+      - Ref: "PublicSubnet1"
+      - Ref: "PublicSubnet2"
+      SecurityGroups: 
+      - Ref: "WebserverAppSG"
+      IpAddressType: "ipv4"
+
+  HTTPListener:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      LoadBalancerArn: !Ref "WEBelb"
+      Port: 80
+      Protocol: "HTTP"
+      DefaultActions: 
+      - Type: forward
+        TargetGroupArn: !Ref "WebTargetGroup"
+                
+  WebTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      Protocol: HTTP
+      TargetType: instance
+      VpcId: !Ref "PubPrivateVPC"      
+
+######################################################
+# 
+#   NetWork  LoadBalancer and Target Group
+#
+######################################################
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !Ref OperatorEMail
+          Protocol: email
+  
+  DBelb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: "DBelb"
+      Scheme: "internal"    
+      Subnets: 
+        - Ref: "PrivateSubnet1"
+        - Ref: "PrivateSubnet2"
+      Type: network
+      IpAddressType: ipv4
+
+
+
+
+  TCPListener:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      LoadBalancerArn: !Ref "DBelb"
+      Port: 3306
+      Protocol: "TCP"
+      DefaultActions: 
+        - Type: forward
+          TargetGroupArn: !Ref "DBTargetGroup"
+                
+  DBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 3306
+      Protocol: TCP
+      TargetType: instance
+      VpcId: !Ref "PubPrivateVPC"
+
+######################################################
+# 
+#    DataBase   AutoScaling   Groups          
+#
+######################################################
+
+  DBAsg:          
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties: 
+      LaunchConfigurationName: 
+        Ref: "DBConfig"
+      MinSize: !Ref DBMinSizeASG
+      MaxSize: !Ref DBMaxSizeASG
+      DesiredCapacity: !Ref DBDesiredCapacityASG
+      HealthCheckGracePeriod: 600
+      HealthCheckType: ELB
+      TargetGroupARNs:
+        - Ref: DBTargetGroup
+      VPCZoneIdentifier:
+        - Ref: PrivateSubnet1
+        - Ref: PrivateSubnet2
+      NotificationConfiguration:
+        TopicARN: !Ref NotificationTopic
+        NotificationTypes:
+          - 'autoscaling:EC2_INSTANCE_LAUNCH'
+          - 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR'
+          - 'autoscaling:EC2_INSTANCE_TERMINATE'
+          - 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'        
+      Tags:
+        - Key: Name
+          PropagateAtLaunch: true
+          Value: AutoScaledDB
+     
+    DependsOn: DBConfig
+
+######################################################
+# 
+#    Web   AutoScaling   Group          
+#
+######################################################
+
+  WEBAsg:          
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties: 
+      LaunchConfigurationName: 
+        Ref: "WEBConfig"
+      MinSize: !Ref WEBMinSizeASG
+      MaxSize: !Ref WEBMaxSizeASG
+      DesiredCapacity: !Ref WEBDesiredCapacityASG
+      HealthCheckGracePeriod: 600
+      HealthCheckType: ELB
+      TargetGroupARNs:
+        - Ref: WebTargetGroup
+      VPCZoneIdentifier:
+        - Ref: PrivateSubnet1
+        - Ref: PrivateSubnet2
+      NotificationConfiguration:
+        TopicARN: !Ref NotificationTopic
+        NotificationTypes:
+          - 'autoscaling:EC2_INSTANCE_LAUNCH'
+          - 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR'
+          - 'autoscaling:EC2_INSTANCE_TERMINATE'
+          - 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
+      Tags:
+        - Key: Name
+          PropagateAtLaunch: true
+          Value: AutoScaledWEB     
+    DependsOn: WEBConfig
+
+  WebServerScaleUpPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref 'WEBAsg'
+      Cooldown: '30'
+      ScalingAdjustment: 1
+  WebServerScaleDownPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref 'WEBAsg'
+      Cooldown: '30'
+      ScalingAdjustment: -1
+  CPUAlarmHigh:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Scale-up if CPU > 70% for 1 minutes
+      MetricName: CPUUtilization
+      Namespace: AWS/EC2
+      Statistic: Average
+      Period: 30
+      EvaluationPeriods: 1
+      Threshold: 70
+      AlarmActions: [!Ref 'WebServerScaleUpPolicy']
+      Dimensions:
+      - Name: AutoScalingGroupName
+        Value: !Ref 'WEBAsg'
+      ComparisonOperator: GreaterThanThreshold
+  CPUAlarmLow:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Scale-down if CPU < 30% for 1 minutes
+      MetricName: CPUUtilization
+      Namespace: AWS/EC2
+      Statistic: Average
+      Period: 30
+      EvaluationPeriods: 1
+      Threshold: 30
+      AlarmActions: [!Ref 'WebServerScaleDownPolicy']
+      Dimensions:
+      - Name: AutoScalingGroupName
+        Value: !Ref 'WEBAsg'
+      ComparisonOperator: LessThanThreshold
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref BastionHost
+  BastionHost:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageAMI
+      InstanceType: t3a.nano
+      KeyName: !Ref KeyName
+      SubnetId: !Ref PublicSubnet1
+      SecurityGroupIds:
+        - Ref: WebserverAppSG
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 8
+      Tags:
+        - Key: Name
+          Value: "Bastion-Host"    
+      UserData:
+        Fn::Base64: !Sub |
+          echo "Shadab Deployed" > /home/$User/user.txt

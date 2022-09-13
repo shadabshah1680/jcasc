@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "Creation of VPc,subnet,Route Table, Sec-Groups for AWS CloudFormation Assignment"
+# This CloudFormation template deploys a basic VPC / Network. 
+
+Parameters:
+  NumberOfAZs:
+    Type: Number
+    AllowedValues:
+    - 1
+    - 2
+    - 3
+    Default: 2
+    Description:  How many Availability Zones do you wish to utilize?
+  
+  PrivateSubnets:
+    Type: String
+    AllowedValues:
+    - True
+    - False
+    Default: True
+    Description: Do you want to create private subnets in addition to public subnets?
+
+  Environment:
+    Type: String
+    Default: Test
+    AllowedValues:
+      - Test
+      - Production
+      - Development
+    Description: Enter Environment name for your Stack. Default is Test.
+
+  InstanceTypeParameter:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - m1.small
+      - m1.large
+    Description: Enter t2.micro, m1.small, or m1.large. Default is t2.micro.
+  
+  EC2KeyName:
+    Description: Name of an EC2 KeyPair to enable SSH access to the instance.
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+    Default: rsa-pub
+  
+  OperatorEMail:
+    Description: A valid EMail address to notify if there are any scaling operations
+    Type: String
+    Default: syed.shadab@eurustechnologies.com
+  
+
+Resources:
+
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://nested-stack-101.s3.us-west-1.amazonaws.com/01-VPC.yml
+      Parameters:  
+        NumberOfAZs: !Ref NumberOfAZs
+        PrivateSubnets: !Ref PrivateSubnets
+        Environment: !Ref Environment 
+      TimeoutInMinutes: 5            
+
+  SecGroupStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://nested-stack-101.s3.us-west-1.amazonaws.com/02-Sec-Group.yml
+      Parameters:
+        VPCId: !GetAtt VPCStack.Outputs.VPCID
+        Environment: !Ref Environment 
+      TimeoutInMinutes: 5
+  
+  LoadBalancerStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://nested-stack-101.s3.us-west-1.amazonaws.com/03-LB.yml
+      Parameters:
+        VPCId: !GetAtt VPCStack.Outputs.VPCID
+        PrivateSubnetA: !GetAtt VPCStack.Outputs.PrivateSubnetA
+        PrivateSubnetB: !GetAtt VPCStack.Outputs.PrivateSubnetB
+        PublicSubnetA:  !GetAtt VPCStack.Outputs.PublicSubnetA
+        PublicSubnetB:  !GetAtt VPCStack.Outputs.PublicSubnetB
+        LoadBalancerSecGroup: !GetAtt SecGroupStack.Outputs.LoadBalancerSecGroup
+        DBSecurityGroup:  !GetAtt SecGroupStack.Outputs.DBSecurityGroup
+        LaunchTemplateSecurityGroup:  !GetAtt SecGroupStack.Outputs.LaunchTemplateSecurityGroup
+        WebServerSecurityGroup: !GetAtt SecGroupStack.Outputs.WebServerSecurityGroup
+        Environment: !Ref Environment 
+        InstanceTypeParameter: !Ref InstanceTypeParameter
+        EC2KeyName: !Ref EC2KeyName
+      TimeoutInMinutes: 5         
+
+  AutoScalingGroupStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://nested-stack-101.s3.us-west-1.amazonaws.com/04-ASG.yml
+      Parameters:
+        PrivateSubnetA: !GetAtt VPCStack.Outputs.PrivateSubnetA
+        PrivateSubnetB: !GetAtt VPCStack.Outputs.PrivateSubnetB
+        LaunchTemplateID: !GetAtt LoadBalancerStack.Outputs.LaunchTemplateID
+        LaunchTemplateVersion:  !GetAtt LoadBalancerStack.Outputs.LaunchTemplateVersion
+        LoadBalancerTGARN:  !GetAtt LoadBalancerStack.Outputs.LoadBalancerTGARN
+        Environment: !Ref Environment
+        OperatorEMail: !Ref OperatorEMail
+      TimeoutInMinutes: 5
+
+Outputs:
+  ALBDNS:
+    Description: Application Load Balancer DNS
+    Value: !GetAtt LoadBalancerStack.Outputs.ALBDNS

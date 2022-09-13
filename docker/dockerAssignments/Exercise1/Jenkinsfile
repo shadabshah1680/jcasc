@@ -1,0 +1,75 @@
+def notifySlack(String buildStatus = 'STARTED') {
+    // Build status of null means success.
+    buildStatus = buildStatus ?: 'SUCCESS'
+
+    def color
+
+    if (buildStatus == 'STARTED') {
+        color = '#00FF00'
+    } else if (buildStatus == 'SUCCESS') {
+        color = '#00FF00'
+    } else if (buildStatus == 'UNSTABLE') {
+        color = '#ff0000'
+    } else {
+        color = '#ff0000'
+    }
+
+    def msg = "${buildStatus}: `${env.JOB_NAME}` #${env.BUILD_NUMBER}:\n${env.BUILD_URL}"
+
+    slackSend(color: color, message: msg)
+}
+
+node {
+    try {
+        notifySlack()
+
+        // Existing build steps.
+    } catch (e) {
+        currentBuild.result = 'FAILURE'
+        throw e
+    } finally {
+        notifySlack(currentBuild.result)
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
+
+
+pipeline {
+    agent any
+    stages {
+        stage('Sample') {
+            steps{
+                echo "Shadab Shah"    
+            }
+        }
+        stage('SCM') {
+            steps {
+                sh "git clone -b docker-exerciseOne git@github.com:shadabshah1680/Eurus_Work.git"
+            }
+        }
+        stage('Build') {
+            
+            steps {
+                sh "cd docker/dockerAssignments/Execise1 && sudo docker build -t nginx:latest -f nginx.Dockerfile ."
+                sh "cd docker/dockerAssignments/Execise1 && sudo docker build -t mongo:latest -f mongo.Dockerfile ."
+            }
+        }
+        stage('Deploy') {
+            
+            steps {
+                sh "sudo docker run -d -p 80:80 -v /tmp/nginx/html:/usr/share/nginx/html nginx:latest"
+                sh "sudo docker run -d -p 27017:27017 mongo:latest"
+            }
+        }
+    }
+    post {
+       // trigger every-works
+       always {
+
+            cleanWs()
+       }
+    }
+}

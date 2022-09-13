@@ -1,0 +1,157 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "Testing Creation of VPc,subnet,Route Table, Sec-Groups, EC2-Instances, DB instances etc"
+# This CloudFormation template deploys a basic VPC / Network. 
+
+Parameters:
+
+  OperatorEMail:
+    Description: A valid EMail address to notify if there are any scaling operations
+    Type: String
+  
+  Environment:
+    Type: String
+    Default: Test
+    AllowedValues:
+      - Test
+      - Production
+      - Development
+    Description: Enter Environment name for your Stack. Default is Test.
+
+  PrivateSubnetA: 
+    Description: Private subnet in us-west-2-a
+    Type: String
+  
+  PrivateSubnetB: 
+    Description: Private subnet in us-west-2-b
+    Type: String
+    
+  LaunchTemplateID: 
+    Description: Returns ID of Launch Template	
+    Type: String
+
+  LaunchTemplateVersion:
+    Description: Returns Version of Launch Template	
+    Type: String
+
+  LoadBalancerTGARN:
+    Description: Returns ARN of ALB Target Group	
+    Type: String
+
+Resources:
+
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !Ref OperatorEMail
+          Protocol: email
+
+  WebServerAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    # CreationPolicy:
+    #   ResourceSignal:
+    #     Timeout: PT3M
+    #     Count: '2'
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: '2'
+        MinInstancesInService: '1'
+        PauseTime: PT2M
+        #MinSuccessfulInstancesPercent: 40
+        WaitOnResourceSignals: 'false'
+
+    Properties:
+      AutoScalingGroupName: !Join ['', ["shadab-", !Ref Environment, "-WebServer-ASG" ]]
+      VPCZoneIdentifier:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+      HealthCheckGracePeriod: 120
+      HealthCheckType: ELB
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplateID
+        Version:  !Ref LaunchTemplateVersion
+      MinSize: 2
+      MaxSize: 6
+      DesiredCapacity: 2      
+      Tags:
+        - Key: Name
+          Value: !Join ['-', ["shadab", !Ref Environment, "WebServer-ASG" ]]
+          PropagateAtLaunch: true
+      TargetGroupARNs:
+        - !Ref LoadBalancerTGARN
+      NotificationConfiguration:
+        TopicARN: !Ref NotificationTopic
+        NotificationTypes:
+          - 'autoscaling:EC2_INSTANCE_LAUNCH'
+          - 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR'
+          - 'autoscaling:EC2_INSTANCE_TERMINATE'
+          - 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
+
+  WebServerScaleUpPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: PercentChangeInCapacity
+      PolicyType: StepScaling
+      #
+      StepAdjustments:
+        - MetricIntervalLowerBound: 0
+          MetricIntervalUpperBound: 20
+          ScalingAdjustment: 0
+        - MetricIntervalLowerBound: 20
+          MetricIntervalUpperBound: 30
+          ScalingAdjustment: 10
+        - MetricIntervalLowerBound: 30
+          ScalingAdjustment: 40
+      AutoScalingGroupName: !Ref WebServerAutoScalingGroup
+      Cooldown: 60
+  CPUAlarmHigh:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      EvaluationPeriods: '2'
+      Statistic: Maximum
+      Threshold: '60'
+      AlarmDescription: 'Scale out if CPU > 60% for 2 minutes'
+      Period: '60'
+      AlarmActions:
+      - !Ref WebServerScaleUpPolicy
+      Namespace: AWS/EC2
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref WebServerAutoScalingGroup
+      ComparisonOperator: GreaterThanThreshold
+      MetricName: CPUUtilization
+
+  WebServerScaleDownPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: PercentChangeInCapacity
+      PolicyType: StepScaling
+      StepAdjustments:
+        - MetricIntervalLowerBound: -10
+          MetricIntervalUpperBound: 0
+          ScalingAdjustment: 0
+        - MetricIntervalLowerBound: -20
+          MetricIntervalUpperBound: -10
+          ScalingAdjustment: -10
+        - MetricIntervalUpperBound: -20
+          ScalingAdjustment: -30
+      AutoScalingGroupName: !Ref WebServerAutoScalingGroup
+      Cooldown: 60
+
+  CPUAlarmLow:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      EvaluationPeriods: '2'
+      Statistic: Maximum
+      Threshold: '40'
+      AlarmDescription: 'Scale out if CPU < 60% for 2 minutes'
+      Period: '60'
+      AlarmActions:
+      - !Ref WebServerScaleDownPolicy
+      Namespace: AWS/EC2
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref WebServerAutoScalingGroup
+      ComparisonOperator: LessThanThreshold
+      MetricName: CPUUtilization
+

@@ -1,0 +1,18 @@
+1	Mini McRoyale Meal
+2	Value McArabia Meal
+3	Spicy Chicken Burger with Cheese Meal
+4	Cheeseburger
+5	Spicy Chicken Burger
+6	Medium Fries
+7	Hot Fudge Sundae
+8	Strawberry Sundae
+9	Chocolate Shake
+10	Strawberry Shake
+11	Vanilla Shake
+12	Orange Juice
+13	Beef Burger
+14	Cheese Burger
+15	Chicken Burger
+16	Chicken McNuggets (4 pcs)
+17	Regular Fries
+18	Chocolate Shake

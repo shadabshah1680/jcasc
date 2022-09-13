@@ -1,0 +1,39 @@
+version: '3'
+services:
+  redis:
+    restart: always
+    build:
+      dockerfile: redis.Dockerfile
+      context: ./redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - '6379'
+  main_nginx:
+    restart: always
+    build:
+      dockerfile: main_nginx.Dockerfile
+      context: ./main_nginx
+    ports:
+      - '81'
+    depends_on:
+      - flask
+  proxy_nginx:
+
+    restart: always
+    build:
+      dockerfile: proxy_nginx.Dockerfile
+      context: ./proxy_nginx
+    ports:
+      - '80:80'
+    depends_on:
+      - main_nginx
+  flask:
+    build:
+      dockerfile: flask.Dockerfile
+      context: ./flask
+    ports:
+      - '5000'
+    depends_on:
+      - redis

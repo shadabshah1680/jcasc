@@ -1,0 +1,41 @@
+
+
+pipeline {
+    agent any
+    environment {
+    exec_role_arn = credentials('exec_role_arn') 
+    template_url = credentials('template_url')
+    }
+    stages {
+        stage('Build') {
+            
+            steps {
+                sh "aws s3 sync /var/lib/jenkins/workspace/CloudFormation_Stack_blogs_v1_declarative/aws/cloudformation/CFstackAssignment/nested-stack-v3 s3://nested-stack-101"
+            }
+        }
+        stage('Deploy') {
+            
+            steps {
+                script {
+                  def status = sh(script:"aws cloudformation describe-stacks --stack-name blog-dev > st.log 2>&1 && echo \$?", returnStdout: true).trim() 
+                  echo status
+                  if (status == '0') 
+                  {    
+                    sh "aws cloudformation update-stack --template-url  ${template_url} --stack-name blog-dev --region us-east-2 --role-arn ${exec_role_arn} --capabilities CAPABILITY_IAM"
+                  } else 
+                  {    
+                    sh "aws cloudformation create-stack --template-url  ${template_url} --stack-name blog-dev --region us-east-2 --role-arn ${exec_role_arn} --capabilities CAPABILITY_IAM"
+                  } 
+    		   }    
+        }
+    }
+    stage('CleanWS'){
+      steps {
+        cleanWs()
+      }
+    }  
+  }
+}
+
+
+

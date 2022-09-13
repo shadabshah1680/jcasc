@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "app.py", line 3, in <module>
+    import redis
+ModuleNotFoundError: No module named 'redis'
+Traceback (most recent call last):
+  File "app.py", line 4, in <module>
+    from flask import Flask, render_template_string, request, session, redirect, url_for
+  File "/usr/local/lib/python3.8/dist-packages/flask/__init__.py", line 19, in <module>
+    from jinja2 import Markup, escape
+ImportError: cannot import name 'Markup' from 'jinja2' (/home/shadab/.local/lib/python3.8/site-packages/jinja2/__init__.py)

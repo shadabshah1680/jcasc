@@ -1,0 +1,90 @@
+Description: Root Stack Template
+Parameters:
+  OperatorEMail:
+    Description: Set email to Get Notifications
+    Type: String
+    Default: syed.shadab@eurustechnologies.com
+  InstanceTypeParameter: 
+    Description: Select instance type
+    Type: String
+    Default: t2.micro
+  KeyName:
+    Description: Existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: rsa-pub
+  ImageAMI:
+    Description: Enter AMI ID
+    Type: String
+    Default: ami-051dfed8f67f095f5
+  DBMaxSizeASG:
+    Description: "Enter the Max Size for the DBASG"
+    Type: String
+    Default: 3
+  DBMinSizeASG:
+    Description: "Enter the Min Size for the DBASG"
+    Type: String
+    Default: 1
+  DBDesiredCapacityASG:
+    Description: "Enter the desired capacity for the DBASG"
+    Type: String
+    Default: 1
+  WEBMaxSizeASG:
+    Description: "Enter the Max Size for the WEBASG"
+    Type: String
+    Default: 3
+  WEBMinSizeASG:
+    Description: "Enter the Min Size for the WEBASG"
+    Type: String
+    Default: 1
+  WEBDesiredCapacityASG:
+    Description: "Enter the desired capacity for the WEBASG"
+    Type: String
+    Default: 1
+  StackName:
+    Description: "Always Compute Stack Name"
+    Type: String
+    Default: CS
+Resources:
+  NS:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://nested-stack-101.s3.us-west-1.amazonaws.com/Network-Stack-Ohio.yml
+      TimeoutInMinutes: 12
+  CS:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://nested-stack-101.s3.us-west-1.amazonaws.com/Compute-Stack.yml
+      Parameters:
+        OperatorEMail: !Ref OperatorEMail
+        InstanceTypeParameter: !Ref InstanceTypeParameter
+        KeyName: !Ref KeyName
+        ImageAMI: !Ref ImageAMI
+        DBMaxSizeASG: !Ref DBMaxSizeASG
+        DBMinSizeASG: !Ref DBMinSizeASG
+        DBDesiredCapacityASG: !Ref DBDesiredCapacityASG
+        WEBMaxSizeASG: !Ref WEBMaxSizeASG
+        WEBMinSizeASG: !Ref WEBMinSizeASG
+        WEBDesiredCapacityASG: !Ref WEBDesiredCapacityASG
+        DBTargetGroup:  !GetAtt NS.Outputs.DBTargetGroup
+        WEBTargetGroup: !GetAtt NS.Outputs.WEBTargetGroup  
+        MySqlDBstreamSG: !GetAtt NS.Outputs.MySqlDBstreamSG
+        WebserverAppSG: !GetAtt NS.Outputs.WebserverAppSG 
+        PublicSubnet1:  !GetAtt NS.Outputs.PublicSubnet1
+        PrivateSubnet1: !GetAtt NS.Outputs.PrivateSubnet1 
+        PrivateSubnet2: !GetAtt NS.Outputs.PrivateSubnet2 
+        DBelb:          !GetAtt NS.Outputs.DBelb
+      TimeoutInMinutes: 5
+    DependsOn: NS
+
+  PS:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://nested-stack-101.s3.us-west-1.amazonaws.com/Policies-Stack.yml
+      Parameters:
+        StackName: !Ref StackName
+        WebASGName: !GetAtt CS.Outputs.WEBAsg
+      TimeoutInMinutes: 5
+    DependsOn: CS
+
+
+

@@ -1,0 +1,24 @@
+1	Hazelnut Iced Latte
+2	Lemon Iced Tea
+3	Mango Iced Tea
+4	Mocha Frappé
+5	Mocha Iced Latte
+6	Peach Iced Tea
+7	Raspberry Iced Tea
+8	Vanilla Frappé
+9	Vanilla Oreo Frappé
+10	Espresso
+11	Americano
+12	Babyccino
+13	Cappuccino
+14	Latte
+15	Long Black Coffee
+16	Mochaccino
+17	Hot Chocolate
+18	Tea
+19	Green Tea
+20	Cardamom Tea
+21	Boston Cream
+22	Chocolate Fudge
+23	Caramel Cream
+24	Vanilla Sprinkle

@@ -1,0 +1,18 @@
+1	Quarter Pounder with Cheese
+2	Filet-o-Fish
+3	McArabia
+4	Mini McArabia
+5	Crispy Chicken
+6	Chicken McNuggets
+7	BBQ Wrap
+8	Cheesy Mayo
+9	Chipotle Wrap
+10	Double Chocolate Pie
+11	Sundae Brownie
+12	McFlurry Oreo
+13	Hot Fudge Sundae
+14	Strawberry Sundae
+15	Vanilla Cone
+16	Choco Cone
+17	Apple Pie
+18	Chocolate Shake

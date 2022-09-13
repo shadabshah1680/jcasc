@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "Creation of Sec-Groups, EC2-Instances, DB instances etc"
+
+Parameters:
+  Environment:
+    Type: String
+    Default: Test
+    AllowedValues:
+      - Test
+      - Production
+      - Development
+    Description: Enter Environment name for your Stack. Default is Test.
+  
+  VPCId: 
+    Description: Create security group in this respective VPC
+    Type: String
+  
+Resources:
+  # Security Groups
+  LoadBalancerSecGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable HTTP from 0.0.0.0/0
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VPCId
+      Tags:
+      - Key: Name
+        Value:  !Join ['', ["shadab-", !Ref Environment, "-ALB-Sec-Group" ]]
+  
+  LaunchTemplateSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable HTTP from 0.0.0.0/0
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          SourceSecurityGroupId: !Ref LoadBalancerSecGroup
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+      VpcId:  !Ref VPCId    
+      Tags:
+      - Key: Name
+        Value:  !Join ['', ["shadab-", !Ref Environment, "-LT-Sec-Group" ]]
+
+  WebServerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable HTTP from 0.0.0.0/0
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+      VpcId:  !Ref VPCId
+      Tags:
+      - Key: Name
+        Value:  !Join ['', ["shadab-", !Ref Environment, "-Server-Sec-Group" ]]
+  
+  DBSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: RDS Security Group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '3306'
+          ToPort: '3306'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+      VpcId:  !Ref VPCId
+      Tags:
+      - Key: Name
+        Value:  !Join ['', ["shadab-", !Ref Environment, "-RDS-Sec-Group" ]]
+
+Outputs:
+  LoadBalancerSecGroup:
+    Description: Returns Sec Group ID for Application Load Balancer
+    Value: !Ref LoadBalancerSecGroup
+    # Export:
+    #   Name: !Join ['', ["shadab-", !Ref Environment, "-ALB-Sec-Group" ]]
+  
+  LaunchTemplateSecurityGroup:
+    Description: Returns Sec Group ID for Launch Template
+    Value: !Ref LaunchTemplateSecurityGroup
+    # Export:
+    #   Name: !Join ['', ["shadab-", !Ref Environment, "-LT-Sec-Group" ]]
+
+  WebServerSecurityGroup:
+    Description: Returns Sec Group ID for WebServer(Public)
+    Value: !Ref WebServerSecurityGroup
+    # Export:
+    #   Name: !Join ['', ["shadab-", !Ref Environment, "-Server-Sec-Group" ]]
+
+  DBSecurityGroup:
+    Description: Returns Sec Group ID for Database(Public)
+    Value: !Ref DBSecurityGroup
+    # Export:
+    #   Name: !Join ['', ["shadab-", !Ref Environment, "-RDS-Sec-Group" ]]

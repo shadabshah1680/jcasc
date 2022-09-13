@@ -1,0 +1,6 @@
+Host client-server
+  HostName 44.224.209.23
+  User ec2-user
+  IdentityFile ~/Desktop/shadab-eurus.pem
+Host 13.59.190.66
+    ForwardAgent yes

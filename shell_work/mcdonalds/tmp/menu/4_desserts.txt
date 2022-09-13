@@ -1,0 +1,9 @@
+1	Milo
+2	Happy Meal Books
+3	Big Mac Meal
+4	Chicken Mac
+5	Double McChicken Meal
+6	Double Cheese Burger Meal
+7	Double Spicy McCrispy Meal
+8	Double Quarter Pounder Meal
+9	Double Filet-o-Fish Meal

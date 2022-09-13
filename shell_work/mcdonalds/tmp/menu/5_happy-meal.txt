@@ -1,0 +1,8 @@
+1	McChicken Meal
+2	Spicy McCrispy Meal
+3	Grand Chicken Spicy Meal
+4	McArabia Meal
+5	McRoyale Meal
+6	Quarter Pounder Meal
+7	Filet-o-Fish Meal
+8	3 Pieces Crispy Chicken Meal

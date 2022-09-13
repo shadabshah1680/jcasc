@@ -1,0 +1,11 @@
+head -n+11 items | tail -n-11 >	 /tmp/menu/1_breakfast.txt
+head -n+29 items | tail -n-18 >	 /tmp/menu/2_value-meals.txt
+head -n+32 items | tail -n-3 >	/tmp/menu/3_happy-menu.txt
+head -n+41 items | tail -n-9 >	/tmp/menu/4_desserts.txt
+head -n+49 items | tail -n-8 >	/tmp/menu/5_happy-meal.txt
+head -n+60 items | tail -n-11 >	 /tmp/menu/6_extra-value-meals.txt
+head -n+78 items | tail -n-18 >	 /tmp/menu/7_burgers.txt
+head -n+81 items | tail -n-3 >	/tmp/menu/8_wraps.txt
+head -n+90 items | tail -n-9 >	/tmp/menu/9_cold-drinks.txt
+head -n+114 items | tail -n-24 >  /tmp/menu/10_mccafe-drinks.txt
+head -n+127 items | tail -n-13 >  /tmp/menu/11_mccafe-bakery.txt

@@ -1,0 +1,3 @@
+UpdatePolicy:
+  AutoScalingReplacingUpdate:
+    WillReplace: true
